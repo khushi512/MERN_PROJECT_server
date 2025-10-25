@@ -24,12 +24,31 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
+const allowedOrigins = [
+  process.env.FRONTEND_URL,      // your main production frontend (optional)
+  "http://localhost:3000",       // for local development
+];
+
 app.use(
-    cors({
-        origin: process.env.FRONTEND_URL,
-        credentials: true,
-    })
+  cors({
+    origin: function (origin, callback) {
+      // Always allow requests from tools without origin (like Postman)
+      if (!origin) return callback(null, true);
+
+      // Allow your fixed origins or any Vercel preview URL pattern
+      const vercelPattern = /^https:\/\/mern-project-client-[a-z0-9-]+\.vercel\.app$/;
+
+      if (allowedOrigins.includes(origin) || vercelPattern.test(origin)) {
+        callback(null, true);
+      } else {
+        console.log("❌ CORS blocked origin:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // allow cookies / credentials if you use them
+  })
 );
+
 connectDB(); 
 
 //Authentication and User Routes
